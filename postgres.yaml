@@ -1,0 +1,33 @@
+version: "3.8"
+
+# mais info: https://youtu.be/tQ6-A1wl-C0
+services:
+  postgres:
+    image: postgres:15
+    command: [postgres, --max_connections=100]
+    networks:
+      - portainer_default
+    environment:
+      POSTGRES_PASSWORD: 4zFQKkp1ALZ
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1024M
+
+
+volumes:
+  postgres_data:
+    external: true
+
+
+networks:
+  portainer_default:
+    external: true

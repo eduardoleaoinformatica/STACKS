@@ -1,0 +1,41 @@
+version: "3.7"
+
+services:
+  minio:
+    image: quay.io/minio/minio
+    command: server /data --console-address ":9001"
+    networks:
+      - portainer_default
+    volumes:
+      - minio_data:/data
+    environment:
+      - MINIO_ROOT_USER=administrator
+      - MINIO_ROOT_PASSWORD=AmtKnieawQ1e
+      - MINIO_BROWSER_REDIRECT_URL=https://minio.leaosecurity.com.br
+      - MINIO_SERVER_URL=https://s3storage.leaosecurity.com.br
+    labels:
+      - traefik.enable=true
+
+      # --- API (porta 9000)
+      - traefik.http.routers.minio_public.rule=Host(`s3storage.leaosecurity.com.br`)
+      - traefik.http.routers.minio_public.entrypoints=websecure
+      - traefik.http.routers.minio_public.tls.certresolver=leresolver
+      - traefik.http.services.minio_public.loadbalancer.server.port=9000
+      - traefik.http.services.minio_public.loadbalancer.passHostHeader=true
+      - traefik.http.routers.minio_public.service=minio_public
+
+      # --- Painel (porta 9001)
+      - traefik.http.routers.minio_console.rule=Host(`minio.leaosecurity.com.br`)
+      - traefik.http.routers.minio_console.entrypoints=websecure
+      - traefik.http.routers.minio_console.tls.certresolver=leresolver
+      - traefik.http.services.minio_console.loadbalancer.server.port=9001
+      - traefik.http.services.minio_console.loadbalancer.passHostHeader=true
+      - traefik.http.routers.minio_console.service=minio_console
+
+volumes:
+  minio_data:
+    external: true
+
+networks:
+  portainer_default:
+    external: true
