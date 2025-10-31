@@ -10,6 +10,8 @@ Você deve criar 6 subdominios do tipo 'A' na Cloudflare
 <p>edge</p>
 <p>www.edge</p>
 
+## Gerar uma senha no link abaixo para o traefik
+
 <a href="https://packtypebot.com.br/gerador/htpasswd.php">Gerador de Senha htpasswd</a>
 
 ## 🎥 Tutorial
