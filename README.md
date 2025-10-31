@@ -23,7 +23,7 @@ https://www.youtube.com/watch?v=GuT92GXosTw
 <p>Copie e cole no Terminal da sua VPS:</p>
 
 ```
-sudo apt update && sudo apt install -y git && git clone https://github.com/eduardoleaoinformatica/STACKS.git && cd STACKS && sudo chmod +x install.sh && ./install.sh
+sudo apt update && sudo apt install -y git && git clone https://github.com/eduardoleaoinformatica/STACKS.git && cd stacks && sudo chmod +x install.sh && ./install.sh
 ```
 
 ## Caso  instância do Portainer expire
