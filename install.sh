@@ -6,23 +6,23 @@ echo "🚀 Iniciando instalação da stack de produção..."
 # -----------------------------
 # CONFIGURAÇÃO DE DOMÍNIOS E SENHAS
 # -----------------------------
-read -p "🌐 Dominio Traefik (ex: traefik.leaosecurity.com.br): " DOMAIN_TRAEFIK
-read -p "🌐 Dominio Portainer (ex: portainer.leaosecurity.com.br): " DOMAIN_PORTAINER
-read -p "🌐 Dominio MinIO Console (ex: minio.leaosecurity.com.br): " DOMAIN_MINIO_CONSOLE
-read -p "🌐 Dominio MinIO API (ex: s3storage.leaosecurity.com.br): " DOMAIN_MINIO_API
-read -p "🌐 Dominio Chatwoot (ex: chatwoot.leaosecurity.com.br): " DOMAIN_CHATWOOT
-read -p "🌐 Dominio n8n (ex: n8n.leaosecurity.com.br): " DOMAIN_N8N
+read -p "🌐 Dominio Traefik (ex: traefik.seudominio.com): " DOMAIN_TRAEFIK
+read -p "🌐 Dominio Portainer (ex: portainer.seudominio.com): " DOMAIN_PORTAINER
+read -p "🌐 Dominio MinIO Console (ex: minio.seudominio.com): " DOMAIN_MINIO_CONSOLE
+read -p "🌐 Dominio MinIO API (ex: s3storage.seudominio.com): " DOMAIN_MINIO_API
+read -p "🌐 Dominio Chatwoot (ex: chatwoot.seudominio.com): " DOMAIN_CHATWOOT
+read -p "🌐 Dominio n8n (ex: n8n.seudominio.com): " DOMAIN_N8N
 read -p "📧 Email para SSL Let's Encrypt: " EMAIL_SSL
 
 # Senhas seguras (você pode alterar se quiser)
 POSTGRES_USER="postgres"
-POSTGRES_PASSWORD="4zFQKkp1ALZ"
+POSTGRES_PASSWORD="ChangeThisPostgres123!"
 POSTGRES_DB="chatwoot_production"
-REDIS_PASSWORD="rk81wJJxBQ13"
+REDIS_PASSWORD="ChangeThisRedis123!"
 MINIO_USER="administrator"
-MINIO_PASS="AmtKnieawQ1e"
-N8N_USER="eduardo"
-N8N_PASS="37954149897Eduardo"
+MINIO_PASS="ChangeThisMinio123!"
+N8N_USER="admin"
+N8N_PASS="ChangeThisN8N123!"
 N8N_KEY=$(openssl rand -hex 16)
 
 STACK_DIR="/opt/stack"
