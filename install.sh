@@ -1,28 +1,40 @@
 #!/bin/bash
 set -e
 
-# === CONFIGURAÇÕES ===
-EMAIL_SSL="leaoservtech@gmail.com"
-DOMAIN_TRAEFIK="traefik.leaosecurity.com.br"
-DOMAIN_PORTAINER="portainer.leaosecurity.com.br"
-DOMAIN_MINIO_CONSOLE="minio.leaosecurity.com.br"
-DOMAIN_MINIO_API="s3storage.leaosecurity.com.br"
-DOMAIN_CHATWOOT="chatwoot.leaosecurity.com.br"
-DOMAIN_N8N="n8n.leaosecurity.com.br"
+echo "🚀 Iniciando instalação da stack de produção..."
 
+# -----------------------------
+# CONFIGURAÇÃO DE DOMÍNIOS E SENHAS
+# -----------------------------
+read -p "🌐 Dominio Traefik (ex: traefik.leaosecurity.com.br): " DOMAIN_TRAEFIK
+read -p "🌐 Dominio Portainer (ex: portainer.leaosecurity.com.br): " DOMAIN_PORTAINER
+read -p "🌐 Dominio MinIO Console (ex: minio.leaosecurity.com.br): " DOMAIN_MINIO_CONSOLE
+read -p "🌐 Dominio MinIO API (ex: s3storage.leaosecurity.com.br): " DOMAIN_MINIO_API
+read -p "🌐 Dominio Chatwoot (ex: chatwoot.leaosecurity.com.br): " DOMAIN_CHATWOOT
+read -p "🌐 Dominio n8n (ex: n8n.leaosecurity.com.br): " DOMAIN_N8N
+read -p "📧 Email para SSL Let's Encrypt: " EMAIL_SSL
+
+# Senhas seguras (você pode alterar se quiser)
 POSTGRES_USER="postgres"
 POSTGRES_PASSWORD="4zFQKkp1ALZ"
 POSTGRES_DB="chatwoot_production"
 REDIS_PASSWORD="rk81wJJxBQ13"
 MINIO_USER="administrator"
 MINIO_PASS="AmtKnieawQ1e"
+N8N_USER="eduardo"
+N8N_PASS="37954149897Eduardo"
+N8N_KEY=$(openssl rand -hex 16)
 
-# === INSTALAÇÃO DO DOCKER ===
-echo "[1/5] Instalando Docker e dependências..."
+STACK_DIR="/opt/stack"
+
+# -----------------------------
+# 1️⃣ INSTALAR DOCKER + COMPOSE
+# -----------------------------
+echo "[1/6] Instalando Docker e dependências..."
 apt update -y >/dev/null
-apt install -y ca-certificates curl gnupg lsb-release >/dev/null
+apt install -y ca-certificates curl gnupg lsb-release openssl >/dev/null
 
-install -m 0755 -d /etc/apt/keyrings
+install -d -m 0755 /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list >/dev/null
 
@@ -32,11 +44,21 @@ apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin >/dev
 systemctl enable docker
 systemctl start docker
 
-# === CRIAÇÃO DAS PASTAS ===
-mkdir -p /opt/stack
-cd /opt/stack
+# -----------------------------
+# 2️⃣ CRIAR DIRETÓRIOS E REDE
+# -----------------------------
+echo "[2/6] Criando pastas e rede..."
+mkdir -p ${STACK_DIR}/{portainer_data,postgres_data,minio_data,n8n_data,letsencrypt}
+cd ${STACK_DIR}
 
-# === CRIAR DOCKER COMPOSE ===
+if ! docker network ls | grep -q stacknet; then
+  docker network create stacknet
+fi
+
+# -----------------------------
+# 3️⃣ CRIAR DOCKER-COMPOSE
+# -----------------------------
+echo "[3/6] Gerando docker-compose.yml..."
 cat > docker-compose.yml <<EOF
 version: "3.8"
 
@@ -134,9 +156,9 @@ services:
     restart: always
     environment:
       - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=SuperSenhaN8N
-      - N8N_ENCRYPTION_KEY=ChaveSeguraN8N
+      - N8N_BASIC_AUTH_USER=${N8N_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASS}
+      - N8N_ENCRYPTION_KEY=${N8N_KEY}
       - EXECUTIONS_PROCESS=queue
       - QUEUE_BULL_REDIS_HOST=redis
       - QUEUE_BULL_REDIS_PASSWORD=${REDIS_PASSWORD}
@@ -188,6 +210,16 @@ services:
       - traefik.http.routers.chatwoot.tls.certresolver=leresolver
       - traefik.http.services.chatwoot.loadbalancer.server.port=3000
 
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: always
+    command: --interval 300 --cleanup
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - stacknet
+
 networks:
   stacknet:
     driver: bridge
@@ -197,17 +229,26 @@ volumes:
   postgres_data:
   minio_data:
   n8n_data:
+  letsencrypt:
 EOF
 
-# === INICIAR STACK ===
-echo "[2/5] Subindo containers..."
+# -----------------------------
+# 4️⃣ SUBIR CONTAINERS
+# -----------------------------
+echo "[4/6] Subindo containers..."
 docker compose up -d
 
-echo "[3/5] Verificando serviços..."
-sleep 10
+# -----------------------------
+# 5️⃣ AGUARDAR INICIALIZAÇÃO
+# -----------------------------
+echo "[5/6] Aguardando inicialização dos serviços..."
+sleep 20
 docker ps
 
-echo "[4/5] Instalando finalizado com sucesso!"
+# -----------------------------
+# 6️⃣ MENSAGEM FINAL
+# -----------------------------
+echo "[6/6] Stack de produção instalada com sucesso!"
 echo "----------------------------------------------------"
 echo "🌐 Traefik:     https://${DOMAIN_TRAEFIK}"
 echo "🌐 Portainer:   https://${DOMAIN_PORTAINER}"
@@ -215,4 +256,5 @@ echo "🌐 MinIO:       https://${DOMAIN_MINIO_CONSOLE}"
 echo "🌐 Chatwoot:    https://${DOMAIN_CHATWOOT}"
 echo "🌐 n8n:         https://${DOMAIN_N8N}"
 echo "----------------------------------------------------"
-echo "✅ Todos os serviços estão sendo gerenciados via Traefik com SSL automático."
+echo "✅ Todos os containers estão monitorados pelo Watchtower a cada 5 minutos."
+echo "💡 Certificados SSL gerados automaticamente via Let's Encrypt."
